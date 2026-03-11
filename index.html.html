@@ -73,6 +73,10 @@
 <body>
 
 <div class="app-container relative">
+
+    <div id="splash-screen" class="absolute inset-0 z-[200] bg-white flex justify-center items-center transition-opacity duration-500">
+        <img src="intro.png" alt="Intro Image" class="w-full h-full object-cover">
+    </div>
    
     <div id="view-onboarding" class="absolute inset-0 flex flex-col h-full bg-white z-[100]">
         <div id="view-landing" class="fade-in flex flex-col h-full p-6 justify-center items-center text-center relative z-20">
@@ -93,7 +97,7 @@
 
         <div id="view-intro" class="fade-in hidden flex-col h-full bg-gray-50 overflow-y-auto pb-10">
             <div class="relative w-full h-[450px] sm:h-[550px] flex-shrink-0 map-bg-fallback overflow-hidden border-b-4 border-blue-600 shadow-inner">
-                <div id="map-wrapper" class="w-full h-full transition-transform ease-in-out" style="transition-duration: 2s;">
+                <div id="map-wrapper" class="w-full h-full transition-transform ease-in-out" style="transition-duration: 5s;">
                     <img id="gwangju-map" src="./map.png" alt="지도" onerror="this.style.display='none';">
                 </div>
                 <div id="map-focus" class="absolute top-1/2 left-1/2 w-20 h-20 bg-blue-500/30 border-blue-600 rounded-full map-focus-ring hidden"></div>
@@ -588,14 +592,18 @@
    
     window.startQRSignup = function() { alert("📷 매장 QR 스캔 기능은 연동 준비 중입니다."); };
 
+    // 지도 포커스 수학적 계산 적용 (정중앙 이동)
     function focusMapByDongName(dong) {
         const mapWrapper = document.getElementById('map-wrapper'); const mapFocus = document.getElementById('map-focus'); const mapPin = document.getElementById('map-pin');
         if(dong && dongCoordinates[dong]) {
             const coord = dongCoordinates[dong];
             mapWrapper.style.transformOrigin = `${coord.x}% ${coord.y}%`;
-            mapWrapper.style.transform = `scale(3)`;
-            mapFocus.style.left = `${coord.x}%`; mapFocus.style.top = `${coord.y}%`; mapFocus.classList.remove('hidden');
-            mapPin.style.left = `${coord.x}%`; mapPin.style.top = `${coord.y}%`; mapPin.classList.remove('hidden');
+            // 목표 좌표가 정중앙에 오도록 translate 적용 (100% 기준으로 50% 위치로 이동)
+            mapWrapper.style.transform = `translate(${50 - coord.x}%, ${50 - coord.y}%) scale(3)`;
+            
+            // 핀과 포커스링은 항상 컨테이너의 50%(정중앙)에 고정
+            mapFocus.style.left = `50%`; mapFocus.style.top = `50%`; mapFocus.classList.remove('hidden');
+            mapPin.style.left = `50%`; mapPin.style.top = `50%`; mapPin.classList.remove('hidden');
         }
     }
 
@@ -621,10 +629,11 @@
         const btn = document.getElementById('btn-check-eligibility');
         btn.innerText = "상권 매칭 중..."; btn.disabled = true;
 
+        // 줌인 5초 + 정지 상태 1초 = 총 6초 뒤에 다음 화면으로 이동
         setTimeout(() => {
             btn.innerText = "자격 확인하기"; btn.disabled = false;
             checkEligibilityAuto(addrInput, matchedDong);
-        }, 1500);
+        }, 6000);
     }
 
     function checkEligibilityAuto(addrInput, matchedDong) {
@@ -927,7 +936,22 @@
     }
 
     function updateBadge() { const badge = document.getElementById('msg-badge'); if(user.unreadMsg > 0) { badge.innerText = user.unreadMsg; badge.style.display = 'flex'; } else { badge.style.display = 'none'; } }
-    window.onload = function() { updateBadge(); renderMapMarkers(); };
+    
+    // 처음에 2초 보여주고 자연스럽게 넘어가도록 하는 코드
+    window.onload = function() { 
+        updateBadge(); 
+        renderMapMarkers(); 
+
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if(splash) {
+                splash.style.opacity = '0'; // 부드럽게 페이드아웃 효과
+                setTimeout(() => {
+                    splash.classList.add('hidden'); // 완전히 숨김 처리
+                }, 500);
+            }
+        }, 2000); // 2000ms = 2초
+    };
 </script>
 </body>
 </html>
